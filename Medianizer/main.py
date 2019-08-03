@@ -28,6 +28,7 @@ class Medianizer(IconScoreBase):
     # After 6 hours, the price from the feed is considered
     # as invalid if it isn't updated
     _TIMEOUT_PRICE_UPDATE = 6 * 60 * 60 * 1000 * 1000
+    # Do not exceed 100 price feeds subscribed
     _MAXIMUM_FEEDS = 100
 
     # ================================================
