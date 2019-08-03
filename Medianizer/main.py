@@ -28,6 +28,7 @@ class Medianizer(IconScoreBase):
     # After 6 hours, the price from the feed is considered
     # as invalid if it isn't updated
     _TIMEOUT_PRICE_UPDATE = 6 * 60 * 60 * 1000 * 1000
+    _MAXIMUM_FEEDS = 100
 
     # ================================================
     #  Error codes
@@ -38,6 +39,7 @@ class Medianizer(IconScoreBase):
     _FEED_NOT_EXISTS = 'FEED_NOT_EXISTS'
     _FEED_NOT_WHITELISTED = 'FEED_NOT_WHITELISTED'
     _TIMEOUT_REACHED = 'TIMEOUT_REACHED'
+    _MAXIMUM_AMOUNT_OF_FEEDS_REACHED = 'MAXIMUM_AMOUNT_OF_FEEDS_REACHED'
 
     # ================================================
     #  Initialization
@@ -78,6 +80,10 @@ class Medianizer(IconScoreBase):
         if len(values) < self._minimum_feeds_available.get():
             raise NotEnoughFeedsAvailable
 
+    def _check_maximum_amount_feeds(self) -> None:
+        if len(self._feeds) > self._MAXIMUM_FEEDS:
+            raise MaximumAmountOfFeedsReached
+
     # ================================================
     #  External methods
     # ================================================
@@ -88,10 +94,13 @@ class Medianizer(IconScoreBase):
         try:
             self._check_is_score_operator(self.msg.sender)
             self._check_feed_not_already_exists(address)
+            self._check_maximum_amount_feeds()
         except SenderNotScoreOwner:
             revert(self._SENDER_NOT_SCORE_OWNER)
         except FeedAlreadyExists:
             revert(self._FEED_ALREADY_EXISTS)
+        except MaximumAmountOfFeedsReached:
+            revert(self._MAXIMUM_AMOUNT_OF_FEEDS_REACHED)
 
         # ==========================
         # Process

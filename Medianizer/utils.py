@@ -1,6 +1,6 @@
 class Utils():
     @staticmethod
-    def array_db_remove(array, element):
+    def array_db_remove(array: list, element) -> None:
         tmp = []
         while array:
             cur = array.pop()
