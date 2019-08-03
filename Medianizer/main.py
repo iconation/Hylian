@@ -90,6 +90,7 @@ class Medianizer(IconScoreBase):
     # ================================================
     @external
     def add_feed(self, address: Address) -> None:
+        """ Add a price feed to the whitelist """
         # ==========================
         # Input Checks
         try:
@@ -109,6 +110,7 @@ class Medianizer(IconScoreBase):
 
     @external
     def remove_feed(self, address: Address) -> None:
+        """ Remove a price feed from the whitelist """
         # ==========================
         # Input Checks
         try:
@@ -125,15 +127,19 @@ class Medianizer(IconScoreBase):
 
     @external(readonly=True)
     def feeds(self) -> str:
+        """ Return a list of whitelisted price feeds SCORE addresses """
         feeds = list(map(lambda feed: str(feed), self._feeds))
         return json_dumps(feeds)
 
     @external(readonly=True)
     def minimum_feeds_available(self) -> int:
+        """ Return the minimum amount of available price feeds required
+            for the Medianizer to work """
         return self._minimum_feeds_available.get()
 
     @external(readonly=True)
     def value(self) -> int:
+        """ Return the median value of price feeds, computed dynamically """
         # ==========================
         # Process
         try:
