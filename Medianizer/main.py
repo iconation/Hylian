@@ -13,21 +13,24 @@ class Medianizer(IconScoreBase):
     #  DB Variables
     # ================================================
     # The median price value
-    _VALUE = "VALUE"
+    _VALUE = 'VALUE'
     # The timestamp of the latest computed median value
-    _TIMESTAMP = "TIMESTAMP"
+    _TIMESTAMP = 'TIMESTAMP'
     # Whitelist SCORE addresses of the price feed contracts
-    _FEEDS = "FEEDS"
+    _FEEDS = 'FEEDS'
     # The minimum amount of price feeds available required for
     # the oracle to return a valid result
-    _MINIMUM_FEEDS_AVAILABLE = "MINIMUM_FEEDS_AVAILABLE"
+    _MINIMUM_FEEDS_AVAILABLE = 'MINIMUM_FEEDS_AVAILABLE'
+    # The amount of time after which the price from the feed
+    # is considered if it isn't updated in this time frame
+    _TIMEOUT_PRICE_UPDATE = 'TIMEOUT_PRICE_UPDATE'
 
     # ================================================
     #  Constants
     # ================================================
     # After 6 hours, the price from the feed is considered
     # as invalid if it isn't updated
-    _TIMEOUT_PRICE_UPDATE = 6 * 60 * 60 * 1000 * 1000
+    _DEFAULT_TIMEOUT_PRICE_UPDATE = 6 * 60 * 60 * 1000 * 1000
     # Do not exceed 100 price feeds subscribed
     _MAXIMUM_FEEDS = 100
 
@@ -49,10 +52,12 @@ class Medianizer(IconScoreBase):
         self._feeds = ArrayDB(self._FEEDS, db, value_type=Address)
         self._minimum_feeds_available = VarDB(self._MINIMUM_FEEDS_AVAILABLE,
                                               db, value_type=int)
+        self._timeout = VarDB(self._TIMEOUT_PRICE_UPDATE, db, value_type=int)
 
     def on_install(self, minimum_feeds_available: int) -> None:
         super().on_install()
         self._minimum_feeds_available.set(minimum_feeds_available)
+        self._timeout = self._DEFAULT_TIMEOUT_PRICE_UPDATE
 
     def on_update(self) -> None:
         super().on_update()
@@ -124,6 +129,21 @@ class Medianizer(IconScoreBase):
         # Process
         Utils.array_db_remove(self._feeds, address)
 
+    @external
+    def set_timeout(self, timeout: int) -> None:
+        # ==========================
+        # Input Checks
+        try:
+            self._check_is_score_operator(self.msg.sender)
+        except SenderNotScoreOwner:
+            revert(self._SENDER_NOT_SCORE_OWNER)
+
+        # ==========================
+        # Process
+        self._timeout.set(timeout)
+
+    # ==== ReadOnly methods =============================================
+
     @external(readonly=True)
     def feeds(self) -> str:
         """ Return a list of whitelisted price feeds SCORE addresses """
@@ -150,11 +170,16 @@ class Medianizer(IconScoreBase):
 
         return median
 
+    @external(readonly=True)
+    def timeout(self) -> int:
+        """ Return the value of the price feed timeout """
+        return self._timeout.get()
+
     # ================================================
     #  Private methods
     # ================================================
-    def _timeout(self, timestamp):
-        return (self.now() - timestamp) > self._TIMEOUT_PRICE_UPDATE
+    def _is_timeout(self, timestamp: int) -> bool:
+        return (self.now() - timestamp) > self._timeout.get()
 
     def _get_feeds_values(self) -> list:
         values = []
@@ -165,13 +190,14 @@ class Medianizer(IconScoreBase):
             try:
                 feed = json_loads(feed_score.peek())
                 # Make sure the feed is updated
-                if not self._timeout(feed['timestamp']):
+                if not self._is_timeout(feed['timestamp']):
                     values.append(feed['value'])
-            except:
+            except Exception as err:
                 # A pricefeed SCORE may not work anymore, but we
                 # want to keep running the medianizer as long as
                 # there is a minimum amount of pricefeed available
-                Logger.warning(f'{feed_address} didnt work correctly', TAG)
+                Logger.warning(f'{feed_address} didnt work correctly:' +
+                               f'{str(err)}', TAG)
                 continue
 
         return values
