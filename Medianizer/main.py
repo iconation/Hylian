@@ -164,16 +164,15 @@ class Medianizer(IconScoreBase):
                 feed_address, PriceFeedInterface)
             try:
                 feed = json_loads(feed_score.peek())
+                # Make sure the feed is updated
+                if not self._timeout(feed['timestamp']):
+                    values.append(feed['value'])
             except:
                 # A pricefeed SCORE may not work anymore, but we
                 # want to keep running the medianizer as long as
                 # there is a minimum amount of pricefeed available
                 Logger.warning(f'{feed_address} didnt work correctly', TAG)
                 continue
-
-            # Make sure the feed is updated
-            if not self._timeout(feed['timestamp']):
-                values.append(feed['value'])
 
         return values
 
