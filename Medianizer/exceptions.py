@@ -15,10 +15,6 @@ class FeedNotExists(Exception):
     pass
 
 
-class FeedNotWhitelisted(Exception):
-    pass
-
-
 class NotEnoughFeedsAvailable(Exception):
     pass
 

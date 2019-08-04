@@ -43,7 +43,6 @@ class Medianizer(IconScoreBase):
     _NOT_ENOUGH_FEEDS_AVAILABLE = 'NOT_ENOUGH_FEEDS_AVAILABLE'
     _FEED_ALREADY_EXISTS = 'FEED_ALREADY_EXISTS'
     _FEED_NOT_EXISTS = 'FEED_NOT_EXISTS'
-    _FEED_NOT_WHITELISTED = 'FEED_NOT_WHITELISTED'
     _MAXIMUM_AMOUNT_OF_FEEDS_REACHED = 'MAXIMUM_AMOUNT_OF_FEEDS_REACHED'
     _PRICE_FEED_TIMEOUT = 'PRICE_FEED_TIMEOUT'
     _WRONG_TICKER_NAME = 'WRONG_TICKER_NAME'
@@ -76,10 +75,6 @@ class Medianizer(IconScoreBase):
     def _check_is_score_operator(self, address: Address) -> None:
         if self.owner != address:
             raise SenderNotScoreOwner
-
-    def _check_feed_is_whitelisted(self, address: Address) -> None:
-        if address not in self._feeds:
-            raise FeedNotWhitelisted
 
     def _check_feed_not_already_exists(self, address: Address) -> None:
         if address in self._feeds:
