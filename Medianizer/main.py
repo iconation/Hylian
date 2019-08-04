@@ -181,8 +181,10 @@ class Medianizer(IconScoreBase):
         # ==========================
         # Process
         try:
+            # Get all the feed values
             values = self._get_feeds_values()
             self._check_enough_feeds_available(values)
+            # Compute the median value
             median = Utils.compute_median(values)
         except NotEnoughFeedsAvailable:
             revert(self._NOT_ENOUGH_FEEDS_AVAILABLE)
@@ -206,19 +208,25 @@ class Medianizer(IconScoreBase):
         return (self.now() - timestamp) > self._timeout.get()
 
     def _get_feeds_values(self) -> list:
+        """ Calls the "peek" method for each price feed and
+            return the results as a list """
         values = []
 
         for feed_address in self._feeds:
-            feed_score = self.create_interface_score(
-                feed_address, PriceFeedInterface)
             try:
+                feed_score = self.create_interface_score(
+                    feed_address, PriceFeedInterface)
+
+                # Retrieve the price here
                 feed = json_loads(feed_score.peek())
+
                 # Make sure the feed is updated
                 if not self._is_timeout(feed['timestamp']):
                     values.append(feed['value'])
+
             except Exception as err:
-                # A pricefeed SCORE may not work anymore, but we
-                # want to keep running the medianizer as long as
+                # A pricefeed SCORE may not work as expected anymore,
+                # but we want to keep running the medianizer as long as
                 # there is a minimum amount of pricefeed available
                 Logger.warning(f'{feed_address} didnt work correctly:' +
                                f'{str(err)}', TAG)
