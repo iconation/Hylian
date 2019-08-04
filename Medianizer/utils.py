@@ -14,3 +14,13 @@ class Utils():
         while tmp:
             cur = tmp.pop()
             array.put(cur)
+
+    @staticmethod
+    def compute_median(values: list) -> int:
+        sorted_values = sorted(values)
+        length = len(sorted_values)
+        if length % 2 == 0:
+            return (sorted_values[length // 2] +
+                    sorted_values[length // 2 - 1]) // 2
+        else:
+            return sorted_values[length // 2]

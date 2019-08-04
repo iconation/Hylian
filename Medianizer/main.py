@@ -183,7 +183,7 @@ class Medianizer(IconScoreBase):
         try:
             values = self._get_feeds_values()
             self._check_enough_feeds_available(values)
-            median = self._compute_median(values)
+            median = Utils.compute_median(values)
         except NotEnoughFeedsAvailable:
             revert(self._NOT_ENOUGH_FEEDS_AVAILABLE)
 
@@ -225,12 +225,3 @@ class Medianizer(IconScoreBase):
                 continue
 
         return values
-
-    def _compute_median(self, values: list) -> int:
-        sorted_values = sorted(values)
-        length = len(sorted_values)
-        if length % 2 == 0:
-            return (sorted_values[length // 2] +
-                    sorted_values[length // 2 - 1]) // 2
-        else:
-            return sorted_values[length // 2]
