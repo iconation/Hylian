@@ -25,3 +25,11 @@ class NotEnoughFeedsAvailable(Exception):
 
 class TimeoutReached(Exception):
     pass
+
+
+class PriceFeedTimeout(Exception):
+    pass
+
+
+class WrongTickerName(Exception):
+    pass

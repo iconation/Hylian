@@ -45,6 +45,8 @@ class Medianizer(IconScoreBase):
     _FEED_NOT_EXISTS = 'FEED_NOT_EXISTS'
     _FEED_NOT_WHITELISTED = 'FEED_NOT_WHITELISTED'
     _MAXIMUM_AMOUNT_OF_FEEDS_REACHED = 'MAXIMUM_AMOUNT_OF_FEEDS_REACHED'
+    _PRICE_FEED_TIMEOUT = 'PRICE_FEED_TIMEOUT'
+    _WRONG_TICKER_NAME = 'WRONG_TICKER_NAME'
 
     # ================================================
     #  Initialization
@@ -94,6 +96,14 @@ class Medianizer(IconScoreBase):
     def _check_maximum_amount_feeds(self) -> None:
         if len(self._feeds) > self._MAXIMUM_FEEDS:
             raise MaximumAmountOfFeedsReached
+
+    def _check_timeout(self, timestamp: int) -> None:
+        if self._is_timeout(timestamp):
+            raise PriceFeedTimeout
+    
+    def _check_ticker_name(self, ticker_name: str) -> None:
+        if self._ticker_name.get() != ticker_name:
+            raise WrongTickerName
 
     # ================================================
     #  External methods
@@ -220,16 +230,21 @@ class Medianizer(IconScoreBase):
                 # Retrieve the price here
                 feed = json_loads(feed_score.peek())
 
-                # Make sure the feed is updated
-                if not self._is_timeout(feed['timestamp']):
-                    values.append(feed['value'])
+                # ==========================
+                # Price Feed Checks
+                self._check_ticker_name(feed['ticker_name'])
+                self._check_timeout(feed['timestamp'])
+
+                # ==========================
+                # Process
+                values.append(feed['value'])
 
             except Exception as err:
                 # A pricefeed SCORE may not work as expected anymore,
                 # but we want to keep running the medianizer as long as
                 # there is a minimum amount of pricefeed available
                 Logger.warning(f'{feed_address} didnt work correctly:' +
-                               f'{str(err)}', TAG)
+                               f'{type(err)} : {str(err)}', TAG)
                 continue
 
         return values
