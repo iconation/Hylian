@@ -24,6 +24,8 @@ class Medianizer(IconScoreBase):
     # The amount of time after which the price from the feed
     # is considered if it isn't updated in this time frame
     _TIMEOUT_PRICE_UPDATE = 'TIMEOUT_PRICE_UPDATE'
+    # Ticker name (for display purpose)
+    _TICKER_NAME = 'TICKER_NAME'
 
     # ================================================
     #  Constants
@@ -53,10 +55,14 @@ class Medianizer(IconScoreBase):
         self._minimum_feeds_available = VarDB(self._MINIMUM_FEEDS_AVAILABLE,
                                               db, value_type=int)
         self._timeout = VarDB(self._TIMEOUT_PRICE_UPDATE, db, value_type=int)
+        self._ticker_name = VarDB(self._TICKER_NAME, db, value_type=str)
 
-    def on_install(self, minimum_feeds_available: int) -> None:
+    def on_install(self,
+                   minimum_feeds_available: int,
+                   ticker_name: str) -> None:
         super().on_install()
         self._minimum_feeds_available.set(minimum_feeds_available)
+        self._ticker_name = ticker_name
         self._timeout = self._DEFAULT_TIMEOUT_PRICE_UPDATE
 
     def on_update(self) -> None:
@@ -142,6 +148,19 @@ class Medianizer(IconScoreBase):
         # Process
         self._timeout.set(timeout)
 
+    @external
+    def set_ticker_name(self, ticker_name: str) -> None:
+        # ==========================
+        # Input Checks
+        try:
+            self._check_is_score_operator(self.msg.sender)
+        except SenderNotScoreOwner:
+            revert(self._SENDER_NOT_SCORE_OWNER)
+
+        # ==========================
+        # Process
+        self._ticker_name.set(ticker_name)
+
     # ==== ReadOnly methods =============================================
 
     @external(readonly=True)
@@ -174,6 +193,11 @@ class Medianizer(IconScoreBase):
     def timeout(self) -> int:
         """ Return the value of the price feed timeout """
         return self._timeout.get()
+
+    @external(readonly=True)
+    def ticker_name(self) -> str:
+        """ Return the ticker name of the medianizer """
+        return self._ticker_name.get()
 
     # ================================================
     #  Private methods
