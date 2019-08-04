@@ -39,13 +39,6 @@ class Medianizer(IconScoreBase):
     # ================================================
     #  Error codes
     # ================================================
-    _SENDER_NOT_SCORE_OWNER = 'SENDER_NOT_SCORE_OWNER'
-    _NOT_ENOUGH_FEEDS_AVAILABLE = 'NOT_ENOUGH_FEEDS_AVAILABLE'
-    _FEED_ALREADY_EXISTS = 'FEED_ALREADY_EXISTS'
-    _FEED_NOT_EXISTS = 'FEED_NOT_EXISTS'
-    _MAXIMUM_AMOUNT_OF_FEEDS_REACHED = 'MAXIMUM_AMOUNT_OF_FEEDS_REACHED'
-    _PRICE_FEED_TIMEOUT = 'PRICE_FEED_TIMEOUT'
-    _WRONG_TICKER_NAME = 'WRONG_TICKER_NAME'
 
     # ================================================
     #  Initialization
@@ -95,7 +88,7 @@ class Medianizer(IconScoreBase):
     def _check_timeout(self, timestamp: int) -> None:
         if self._is_timeout(timestamp):
             raise PriceFeedTimeout
-    
+
     def _check_ticker_name(self, ticker_name: str) -> None:
         if self._ticker_name.get() != ticker_name:
             raise WrongTickerName
@@ -112,12 +105,10 @@ class Medianizer(IconScoreBase):
             self._check_is_score_operator(self.msg.sender)
             self._check_feed_not_already_exists(address)
             self._check_maximum_amount_feeds()
-        except SenderNotScoreOwner:
-            revert(self._SENDER_NOT_SCORE_OWNER)
-        except FeedAlreadyExists:
-            revert(self._FEED_ALREADY_EXISTS)
-        except MaximumAmountOfFeedsReached:
-            revert(self._MAXIMUM_AMOUNT_OF_FEEDS_REACHED)
+        except (SenderNotScoreOwner,
+                FeedAlreadyExists,
+                MaximumAmountOfFeedsReached) as error:
+            revert(error.message)
 
         # ==========================
         # Process
@@ -131,10 +122,9 @@ class Medianizer(IconScoreBase):
         try:
             self._check_is_score_operator(self.msg.sender)
             self._check_feed_already_exists(address)
-        except SenderNotScoreOwner:
-            revert(self._SENDER_NOT_SCORE_OWNER)
-        except FeedNotExists:
-            revert(self._FEED_NOT_EXISTS)
+        except (SenderNotScoreOwner,
+                FeedNotExists) as error:
+            revert(error.message)
 
         # ==========================
         # Process
@@ -146,8 +136,8 @@ class Medianizer(IconScoreBase):
         # Input Checks
         try:
             self._check_is_score_operator(self.msg.sender)
-        except SenderNotScoreOwner:
-            revert(self._SENDER_NOT_SCORE_OWNER)
+        except (SenderNotScoreOwner) as error:
+            revert(error.message)
 
         # ==========================
         # Process
@@ -159,8 +149,8 @@ class Medianizer(IconScoreBase):
         # Input Checks
         try:
             self._check_is_score_operator(self.msg.sender)
-        except SenderNotScoreOwner:
-            revert(self._SENDER_NOT_SCORE_OWNER)
+        except (SenderNotScoreOwner) as error:
+            revert(error.message)
 
         # ==========================
         # Process
@@ -191,8 +181,8 @@ class Medianizer(IconScoreBase):
             self._check_enough_feeds_available(values)
             # Compute the median value
             median = Utils.compute_median(values)
-        except NotEnoughFeedsAvailable:
-            revert(self._NOT_ENOUGH_FEEDS_AVAILABLE)
+        except (NotEnoughFeedsAvailable) as error:
+            revert(error.message)
 
         return median
 
@@ -234,12 +224,12 @@ class Medianizer(IconScoreBase):
                 # Process
                 values.append(feed['value'])
 
-            except Exception as err:
+            except Exception as error:
                 # A pricefeed SCORE may not work as expected anymore,
                 # but we want to keep running the medianizer as long as
                 # there is a minimum amount of pricefeed available
                 Logger.warning(f'{feed_address} didnt work correctly:' +
-                               f'{type(err)} : {str(err)}', TAG)
+                               f'{type(error)} : {str(error)}', TAG)
                 continue
 
         return values

@@ -1,31 +1,27 @@
-# ================================================
-#  Exceptions
-# ================================================
-
 
 class SenderNotScoreOwner(Exception):
-    pass
+    message = 'SENDER_NOT_SCORE_OWNER'
 
 
 class FeedAlreadyExists(Exception):
-    pass
+    message = 'FEED_ALREADY_EXISTS'
 
 
 class FeedNotExists(Exception):
-    pass
+    message = 'FEED_NOT_EXISTS'
 
 
 class NotEnoughFeedsAvailable(Exception):
-    pass
-
-
-class TimeoutReached(Exception):
-    pass
+    message = 'NOT_ENOUGH_FEEDS_AVAILABLE'
 
 
 class PriceFeedTimeout(Exception):
-    pass
+    message = 'PRICE_FEED_TIMEOUT'
 
 
 class WrongTickerName(Exception):
-    pass
+    message = 'WRONG_TICKER_NAME'
+
+
+class MaximumAmountOfFeedsReached(Exception):
+    message = 'MAXIMUM_AMOUNT_OF_FEEDS_REACHED'
