@@ -5,18 +5,19 @@
 function print_usage {
     usage_header ${0}
     usage_option " -n <network> : Network to use (localhost, yeouido, euljiro or mainnet)"
+    usage_option " -t <ticker name> : The name of the ticker"
     usage_option " -m <minimum> : The minimum amount of price feeds required for the oracle to run"
     usage_footer
     exit 1
 }
 
 function process {
-    if [[ ("$network" == "") || ("$minimum" == "") ]]; then
+    if [[ ("$network" == "") || ("$minimum" == "") || ("$ticker" == "") ]]; then
         print_usage
     fi
 
     command="tbears deploy $(get_package_name)
-            -c <(python ./scripts/score/dynamic_call/deploy.py ${network} ${minimum})"
+            -c <(python ./scripts/score/dynamic_call/deploy.py ${network} ${minimum} ${ticker})"
 
     txresult=$(./scripts/icon/txresult.sh -n "${network}" -c "${command}")
     exitcode=$?
@@ -33,10 +34,13 @@ function process {
 }
 
 # Parameters
-while getopts "n:m:" option; do
+while getopts "n:m:t:" option; do
     case "${option}" in
         n)
             network=${OPTARG}
+            ;;
+        t)
+            ticker=${OPTARG}
             ;;
         m)
             minimum=${OPTARG}

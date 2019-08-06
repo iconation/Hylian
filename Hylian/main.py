@@ -3,11 +3,11 @@ from .exceptions import *
 from .interfaces import *
 from .utils import *
 
-TAG = 'Medianizer'
+TAG = 'Hylian'
 
 
-class Medianizer(IconScoreBase):
-    """ Medianizer SCORE Base implementation """
+class Hylian(IconScoreBase):
+    """ Hylian SCORE Base implementation """
 
     # ================================================
     #  DB Variables
@@ -48,12 +48,12 @@ class Medianizer(IconScoreBase):
         self._ticker_name = VarDB(self._TICKER_NAME, db, value_type=str)
 
     def on_install(self,
-                   minimum_feeds_available: int,
-                   ticker_name: str) -> None:
+                   ticker_name: str,
+                   minimum_feeds_available: int) -> None:
         super().on_install()
         self._minimum_feeds_available.set(minimum_feeds_available)
-        self._ticker_name = ticker_name
-        self._timeout = self._DEFAULT_TIMEOUT_PRICE_UPDATE
+        self._ticker_name.set(ticker_name)
+        self._timeout.set(self._DEFAULT_TIMEOUT_PRICE_UPDATE)
 
     def on_update(self) -> None:
         super().on_update()
@@ -163,7 +163,7 @@ class Medianizer(IconScoreBase):
     @external(readonly=True)
     def minimum_feeds_available(self) -> int:
         """ Return the minimum amount of available price feeds required
-            for the Medianizer to work """
+            for Hylian to work """
         return self._minimum_feeds_available.get()
 
     @external(readonly=True)
@@ -189,7 +189,7 @@ class Medianizer(IconScoreBase):
 
     @external(readonly=True)
     def ticker_name(self) -> str:
-        """ Return the ticker name of the medianizer """
+        """ Return the ticker name of Hylian """
         return self._ticker_name.get()
 
     # ================================================
@@ -222,7 +222,7 @@ class Medianizer(IconScoreBase):
 
             except Exception as error:
                 # A pricefeed SCORE may not work as expected anymore,
-                # but we want to keep running the medianizer as long as
+                # but we want to keep running Hylian as long as
                 # there is a minimum amount of pricefeed available
                 Logger.warning(f'{feed_address} didnt work correctly:' +
                                f'{type(error)} : {str(error)}', TAG)
