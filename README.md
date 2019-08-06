@@ -82,7 +82,7 @@ tbears start -c ./config/localhost/tbears_server_config.json
 
 ## Whitelist a price feed SCORE (such as Daedric)
 
-- Your Hyalin SCORE needs price feeds in order to work. For doing so, you need to whitelist some SCOREs.
+- Your Hyalin SCORE needs price feeds in order to work. For doing so, you need to whitelist some price feed SCOREs.
 
 - In the root folder of the project, run the following command:
 <pre>$ ./scripts/score/add_feed.sh</pre>
