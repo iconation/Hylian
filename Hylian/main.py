@@ -24,7 +24,9 @@ class Hylian(IconScoreBase):
     # The amount of time after which the price from the feed
     # is considered if it isn't updated in this time frame
     _TIMEOUT_PRICE_UPDATE = 'TIMEOUT_PRICE_UPDATE'
-    # Ticker name (for display purpose)
+    # Ticker name, the price feeds need to subscribe to the
+    # same ticker name if they want to participate to the
+    # price consensus
     _TICKER_NAME = 'TICKER_NAME'
 
     # ================================================
