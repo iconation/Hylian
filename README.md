@@ -135,7 +135,7 @@ If not enough feeds fulfill the conditions declared in the Hylian SCORE, it will
 }
 ```
 
-Otherwise, it will return the following result:
+Otherwise, it will return the following result containing the price value:
 
 ```
 > Command:
