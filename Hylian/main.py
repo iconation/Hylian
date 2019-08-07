@@ -154,6 +154,21 @@ class Hylian(IconScoreBase):
         # Process
         self._ticker_name.set(ticker_name)
 
+    @external
+    def set_minimum_feeds_available(
+            self,
+            minimum_feeds_available: int) -> None:
+        # ==========================
+        # Input Checks
+        try:
+            self._check_is_score_operator(self.msg.sender)
+        except (SenderNotScoreOwner) as error:
+            revert(error.message)
+
+        # ==========================
+        # Process
+        self._minimum_feeds_available.set(minimum_feeds_available)
+
     # ==== ReadOnly methods =============================================
 
     @external(readonly=True)
