@@ -37,6 +37,8 @@ class Hylian(IconScoreBase):
     _DEFAULT_TIMEOUT_PRICE_UPDATE = 6 * 60 * 60 * 1000 * 1000
     # Do not exceed 100 price feeds subscribed
     _MAXIMUM_FEEDS = 100
+    # Hylian version
+    _VERSION = "1.0.0"
 
     # ================================================
     #  Initialization
@@ -197,6 +199,11 @@ class Hylian(IconScoreBase):
             revert(error.message)
 
         return median
+
+    @external(readonly=True)
+    def version(self) -> str:
+        """ Return the Hylian version """
+        return self._VERSION
 
     @external(readonly=True)
     def timeout(self) -> int:
