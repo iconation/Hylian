@@ -172,10 +172,9 @@ class Hylian(IconScoreBase):
     # ==== ReadOnly methods =============================================
 
     @external(readonly=True)
-    def feeds(self) -> str:
+    def feeds(self) -> list:
         """ Return a list of whitelisted price feeds SCORE addresses """
-        feeds = list(map(lambda feed: str(feed), self._feeds))
-        return json_dumps(feeds)
+        return list(map(lambda feed: str(feed), self._feeds))
 
     @external(readonly=True)
     def minimum_feeds_available(self) -> int:
