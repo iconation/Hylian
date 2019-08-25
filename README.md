@@ -3,6 +3,11 @@
     src="https://iconation.team/images/very_small.png" 
     width="120px"
     alt="ICONation logo">
+  X
+  <img 
+    src="https://iconation.team/images/hylian_nobg.png" 
+    width="120px"
+    alt="ICONation logo">
 </p>
 
 <h1 align="center">Hylian : Price Oracle SCORE</h1>
