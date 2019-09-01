@@ -14,14 +14,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from iconservice import *
 
-# ================================================
-#  PriceFeed SCORE interface
-# ================================================
+class Time():
 
-
-class PriceFeedInterface(InterfaceScore):
-    @interface
-    def peek(self) -> dict:
-        pass
+    @staticmethod
+    def is_timeout(now: int, timestamp: int, timeout: int) -> bool:
+        return (now - timestamp) > timeout

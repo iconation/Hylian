@@ -15,3 +15,6 @@ config/yeouido/score_address.txt
 config/localhost/score_address.txt
 
 *.code-workspace
+setup.cfg
+venv
+.vscode

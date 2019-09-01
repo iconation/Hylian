@@ -14,14 +14,12 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from iconservice import *
-
 # ================================================
-#  PriceFeed SCORE interface
+#  Constants
 # ================================================
+TAG = 'Hylian'
+VERSION = '1.1.0'
 
-
-class PriceFeedInterface(InterfaceScore):
-    @interface
-    def peek(self) -> dict:
-        pass
+# After 6 hours, the price from the feed is considered
+# as invalid if it isn't updated
+DEFAULT_TIMEOUT_PRICE_UPDATE = 6 * 60 * 60 * 1000 * 1000

@@ -45,7 +45,7 @@ function usage_footer {
 }
 
 function get_package_name {
-    package=$(cat $(find . -name "package.json" | tail -1) | jq '.main_score')
+    package=$(cat $(find . -maxdepth 2 -name "package.json" | tail -1) | jq '.main_score')
     echo ${package}
 }
 

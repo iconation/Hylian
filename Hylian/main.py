@@ -1,254 +1,180 @@
+# -*- coding: utf-8 -*-
+
+# Copyright 2019 ICONation
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+# http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
 from iconservice import *
-from .exceptions import *
 from .interfaces import *
 from .utils import *
+from .checks import *
+from .version import *
+from .math import *
+from .time import *
+from .feed.feed_composite import *
+from .configuration import *
 
-TAG = 'Hylian'
+
+class WrongTickerName(Exception):
+    pass
+
+
+class NotEnoughFeedsAvailable(Exception):
+    pass
+
+
+class PriceFeedTimeout(Exception):
+    pass
 
 
 class Hylian(IconScoreBase):
     """ Hylian SCORE Base implementation """
 
     # ================================================
-    #  DB Variables
-    # ================================================
-    # The median price value
-    _VALUE = 'VALUE'
-    # The timestamp of the latest computed median value
-    _TIMESTAMP = 'TIMESTAMP'
-    # Whitelist SCORE addresses of the price feed contracts
-    _FEEDS = 'FEEDS'
-    # The minimum amount of price feeds available required for
-    # the oracle to return a valid result
-    _MINIMUM_FEEDS_AVAILABLE = 'MINIMUM_FEEDS_AVAILABLE'
-    # The amount of time after which the price from the feed
-    # is considered if it isn't updated in this time frame
-    _TIMEOUT_PRICE_UPDATE = 'TIMEOUT_PRICE_UPDATE'
-    # Ticker name, the price feeds need to subscribe to the
-    # same ticker name if they want to participate to the
-    # price consensus
-    _TICKER_NAME = 'TICKER_NAME'
-
-    # ================================================
-    #  Constants
-    # ================================================
-    # After 6 hours, the price from the feed is considered
-    # as invalid if it isn't updated
-    _DEFAULT_TIMEOUT_PRICE_UPDATE = 6 * 60 * 60 * 1000 * 1000
-    # Do not exceed 100 price feeds subscribed
-    _MAXIMUM_FEEDS = 100
-    # Hylian version
-    _VERSION = "1.0.0"
-
-    # ================================================
     #  Initialization
     # ================================================
     def __init__(self, db: IconScoreDatabase) -> None:
         super().__init__(db)
-        self._feeds = ArrayDB(self._FEEDS, db, value_type=Address)
-        self._minimum_feeds_available = VarDB(self._MINIMUM_FEEDS_AVAILABLE,
-                                              db, value_type=int)
-        self._timeout = VarDB(self._TIMEOUT_PRICE_UPDATE, db, value_type=int)
-        self._ticker_name = VarDB(self._TICKER_NAME, db, value_type=str)
 
     def on_install(self,
                    ticker_name: str,
                    minimum_feeds_available: int) -> None:
         super().on_install()
-        self._minimum_feeds_available.set(minimum_feeds_available)
-        self._ticker_name.set(ticker_name)
-        self._timeout.set(self._DEFAULT_TIMEOUT_PRICE_UPDATE)
+
+        # Set configuration
+        Configuration.minimum_feeds_available(self.db).set(minimum_feeds_available)
+        Configuration.ticker_name(self.db).set(ticker_name)
+        Configuration.timeout_price_update(self.db).set(DEFAULT_TIMEOUT_PRICE_UPDATE)
+
+        # Set Version
+        Version.set(self.db, VERSION)
 
     def on_update(self) -> None:
         super().on_update()
+        Version.set(self.db, VERSION)
 
     # ================================================
     #  Checks
     # ================================================
-    def _check_is_score_operator(self, address: Address) -> None:
-        if self.owner != address:
-            raise SenderNotScoreOwner
-
-    def _check_feed_not_already_exists(self, address: Address) -> None:
-        if address in self._feeds:
-            raise FeedAlreadyExists
-
-    def _check_feed_already_exists(self, address: Address) -> None:
-        if address not in self._feeds:
-            raise FeedNotExists
-
-    def _check_enough_feeds_available(self, values: list) -> None:
-        if len(values) < self._minimum_feeds_available.get():
-            raise NotEnoughFeedsAvailable
-
-    def _check_maximum_amount_feeds(self) -> None:
-        if len(self._feeds) > self._MAXIMUM_FEEDS:
-            raise MaximumAmountOfFeedsReached
+    def _check_ticker_name(self, ticker_name: str) -> None:
+        if Configuration.ticker_name(self.db).get() != ticker_name:
+            raise WrongTickerName(ticker_name)
 
     def _check_timeout(self, timestamp: int) -> None:
-        if self._is_timeout(timestamp):
-            raise PriceFeedTimeout
+        if Time.is_timeout(self.now(), timestamp, Configuration.timeout_price_update(self.db).get()):
+            raise PriceFeedTimeout(timestamp)
 
-    def _check_ticker_name(self, ticker_name: str) -> None:
-        if self._ticker_name.get() != ticker_name:
-            raise WrongTickerName
+    def _check_enough_feeds_available(self, values: list) -> None:
+        if len(values) < Configuration.minimum_feeds_available(self.db).get():
+            raise NotEnoughFeedsAvailable(len(values))
 
     # ================================================
     #  External methods
     # ================================================
     @external
-    def add_feed(self, address: Address) -> None:
-        """ Add a price feed to the whitelist """
-        # ==========================
-        # Input Checks
-        try:
-            self._check_is_score_operator(self.msg.sender)
-            self._check_feed_not_already_exists(address)
-            self._check_maximum_amount_feeds()
-        except (SenderNotScoreOwner,
-                FeedAlreadyExists,
-                MaximumAmountOfFeedsReached) as error:
-            revert(error.message)
-
-        # ==========================
-        # Process
-        self._feeds.put(address)
+    @only_owner
+    @catch_error
+    def add_feed(self, address: Address, name: str) -> None:
+        """ Add a price feed to Hylian """
+        FeedComposite.add(self.db, address, name, self.now())
 
     @external
+    @only_owner
+    @catch_error
     def remove_feed(self, address: Address) -> None:
-        """ Remove a price feed from the whitelist """
-        # ==========================
-        # Input Checks
-        try:
-            self._check_is_score_operator(self.msg.sender)
-            self._check_feed_already_exists(address)
-        except (SenderNotScoreOwner,
-                FeedNotExists) as error:
-            revert(error.message)
-
-        # ==========================
-        # Process
-        Utils.array_db_remove(self._feeds, address)
+        """ Remove a price feed from Hylian """
+        FeedComposite.remove(self.db, address)
 
     @external
-    def set_timeout(self, timeout: int) -> None:
-        # ==========================
-        # Input Checks
-        try:
-            self._check_is_score_operator(self.msg.sender)
-        except (SenderNotScoreOwner) as error:
-            revert(error.message)
-
-        # ==========================
-        # Process
-        self._timeout.set(timeout)
+    @only_owner
+    @catch_error
+    def set_timeout_price_update(self, timeout_price_update: int) -> None:
+        Configuration.timeout_price_update(self.db).set(timeout_price_update)
 
     @external
+    @only_owner
+    @catch_error
     def set_ticker_name(self, ticker_name: str) -> None:
-        # ==========================
-        # Input Checks
-        try:
-            self._check_is_score_operator(self.msg.sender)
-        except (SenderNotScoreOwner) as error:
-            revert(error.message)
-
-        # ==========================
-        # Process
-        self._ticker_name.set(ticker_name)
+        Configuration.ticker_name(self.db).set(ticker_name)
 
     @external
-    def set_minimum_feeds_available(
-            self,
-            minimum_feeds_available: int) -> None:
-        # ==========================
-        # Input Checks
-        try:
-            self._check_is_score_operator(self.msg.sender)
-        except (SenderNotScoreOwner) as error:
-            revert(error.message)
-
-        # ==========================
-        # Process
-        self._minimum_feeds_available.set(minimum_feeds_available)
+    @only_owner
+    @catch_error
+    def set_minimum_feeds_available(self, minimum_feeds_available: int) -> None:
+        Configuration.minimum_feeds_available(self.db).set(minimum_feeds_available)
 
     # ==== ReadOnly methods =============================================
-
     @external(readonly=True)
+    @catch_error
     def feeds(self) -> list:
-        """ Return a list of whitelisted price feeds SCORE addresses """
-        return list(map(lambda feed: str(feed), self._feeds))
+        """ Return a list of price feeds registered to Hylian """
+        return FeedComposite.serialize(self.db)
 
     @external(readonly=True)
-    def minimum_feeds_available(self) -> int:
-        """ Return the minimum amount of available price feeds required
-            for Hylian to work """
-        return self._minimum_feeds_available.get()
+    @catch_error
+    def feed(self, address: Address) -> dict:
+        """ Return a single price feed registered to Hylian """
+        return FeedComposite.get(self.db, address).serialize()
 
     @external(readonly=True)
+    @catch_error
     def value(self) -> int:
         """ Return the median value of price feeds, computed dynamically """
-        # ==========================
-        # Process
-        try:
-            # Get all the feed values
-            values = self._get_feeds_values()
-            self._check_enough_feeds_available(values)
-            # Compute the median value
-            median = Utils.compute_median(values)
-        except (NotEnoughFeedsAvailable) as error:
-            revert(error.message)
-
-        return median
-
-    @external(readonly=True)
-    def version(self) -> str:
-        """ Return the Hylian version """
-        return self._VERSION
-
-    @external(readonly=True)
-    def timeout(self) -> int:
-        """ Return the value of the price feed timeout """
-        return self._timeout.get()
-
-    @external(readonly=True)
-    def ticker_name(self) -> str:
-        """ Return the ticker name of Hylian """
-        return self._ticker_name.get()
-
-    # ================================================
-    #  Private methods
-    # ================================================
-    def _is_timeout(self, timestamp: int) -> bool:
-        return (self.now() - timestamp) > self._timeout.get()
-
-    def _get_feeds_values(self) -> list:
-        """ Calls the "peek" method for each price feed and
-            return the results as a list """
         values = []
 
-        for feed_address in self._feeds:
+        for address in FeedComposite.feeds(self.db):
             try:
-                feed_score = self.create_interface_score(
-                    feed_address, PriceFeedInterface)
-
-                # Retrieve the price here
-                feed = json_loads(feed_score.peek())
-
-                # ==========================
+                feed_score = self.create_interface_score(address, PriceFeedInterface)
+                # Retrieve the price
+                feed = feed_score.peek()
                 # Price Feed Checks
                 self._check_ticker_name(feed['ticker_name'])
                 self._check_timeout(feed['timestamp'])
-
-                # ==========================
                 # Process
                 values.append(feed['value'])
-
             except Exception as error:
                 # A pricefeed SCORE may not work as expected anymore,
                 # but we want to keep running Hylian as long as
                 # there is a minimum amount of pricefeed available
-                Logger.warning(f'{feed_address} didnt work correctly:' +
+                Logger.warning(f'{address} didnt work correctly:' +
                                f'{type(error)} : {str(error)}', TAG)
                 continue
 
-        return values
+        self._check_enough_feeds_available(values)
+        # Compute the median value
+        return Math.median(values)
+
+    @external(readonly=True)
+    @catch_error
+    def version(self) -> str:
+        """ Return the Hylian version """
+        return Version.get(self.db)
+
+    @external(readonly=True)
+    @catch_error
+    def minimum_feeds_available(self) -> int:
+        """ Return the minimum amount of available price feeds required
+            for Hylian to work """
+        return Configuration.minimum_feeds_available(self.db).get()
+
+    @external(readonly=True)
+    @catch_error
+    def timeout_price_update(self) -> int:
+        """ Return the value of the price feed timeout """
+        return Configuration.timeout_price_update(self.db).get()
+
+    @external(readonly=True)
+    @catch_error
+    def ticker_name(self) -> str:
+        """ Return the ticker name of Hylian """
+        return Configuration.ticker_name(self.db).get()

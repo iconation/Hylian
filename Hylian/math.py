@@ -14,14 +14,15 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from iconservice import *
 
-# ================================================
-#  PriceFeed SCORE interface
-# ================================================
+class Math():
 
-
-class PriceFeedInterface(InterfaceScore):
-    @interface
-    def peek(self) -> dict:
-        pass
+    @staticmethod
+    def median(values: list) -> int:
+        sorted_values = sorted(values)
+        length = len(sorted_values)
+        if length % 2 == 0:
+            return (sorted_values[length // 2] +
+                    sorted_values[length // 2 - 1]) // 2
+        else:
+            return sorted_values[length // 2]
