@@ -122,14 +122,14 @@ tbears start -c ./config/localhost/tbears_server_config.json
 - **Example** :
 <pre>$ ./scripts/score/value.sh -n localhost</pre>
 
-If not enough feeds fulfill the conditions declared in the Hylian SCORE, it will return the following error result:
+If not enough feeds fulfill the conditions declared in the Hylian SCORE, it will return the following error:
 
 ```
 {
     "jsonrpc": "2.0",
     "error": {
         "code": -32032,
-        "message": "NOT_ENOUGH_FEEDS_AVAILABLE"
+        "message": "NotEnoughFeedsAvailable(0)"
     },
     "id": 1
 }
