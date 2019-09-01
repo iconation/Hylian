@@ -1,10 +1,5 @@
 <p align="center">
   <img 
-    src="https://iconation.team/images/very_small.png" 
-    width="120px"
-    alt="ICONation logo">
-  X
-  <img 
     src="https://iconation.team/images/hylian_nobg.png" 
     width="120px"
     alt="ICONation logo">
