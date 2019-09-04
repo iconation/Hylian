@@ -2,6 +2,7 @@
     "jsonrpc": "2.0",
     "method": "icx_sendTransaction",
     "params": {
+        "nid": "0x1",
         "version": "0x3",
         "stepLimit": "0x1000000",
         "nonce": "0x0",
@@ -10,7 +11,7 @@
         "data": {
             "method": "set_ticker_name",
             "params": {
-                "ticker_name" : "xxx"
+                "ticker_name": "xxx"
             }
         }
     },
