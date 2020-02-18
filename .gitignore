@@ -19,3 +19,5 @@ setup.cfg
 venv
 .vscode
 Hylian.zip
+
+rc.log
