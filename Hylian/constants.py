@@ -18,7 +18,7 @@
 #  Constants
 # ================================================
 TAG = 'Hylian'
-VERSION = '1.1.0'
+VERSION = '1.2.0'
 
 # After 6 hours, the price from the feed is considered
 # as invalid if it isn't updated
