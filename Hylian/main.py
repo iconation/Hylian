@@ -156,6 +156,33 @@ class Hylian(IconScoreBase):
 
     @external(readonly=True)
     @catch_error
+    def online_feeds(self) -> int:
+        """ Return the number of online feeds """
+        count = 0
+
+        for address in FeedComposite.feeds(self.db):
+            try:
+                feed_score = self.create_interface_score(address, PriceFeedInterface)
+                # Retrieve the price
+                feed = feed_score.peek()
+                # Price Feed Checks
+                self._check_ticker_name(feed['ticker_name'])
+                self._check_timeout(feed['timestamp'])
+                # Process
+                count += 1
+            except Exception as error:
+                # A pricefeed SCORE may not work as expected anymore,
+                # but we want to keep running Hylian as long as
+                # there is a minimum amount of pricefeed available
+                Logger.warning(f'{address} didnt work correctly:' +
+                               f'{type(error)} : {str(error)}', TAG)
+                continue
+
+        # Compute the median value
+        return count
+
+    @external(readonly=True)
+    @catch_error
     def version(self) -> str:
         """ Return the Hylian version """
         return Version.get(self.db)
