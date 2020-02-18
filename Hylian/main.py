@@ -136,12 +136,12 @@ class Hylian(IconScoreBase):
             try:
                 feed_score = self.create_interface_score(address, PriceFeedInterface)
                 # Retrieve the price
-                feed = feed_score.peek()
+                feed_result = feed_score.peek()
                 # Price Feed Checks
-                self._check_ticker_name(feed['ticker_name'])
-                self._check_timeout(feed['timestamp'])
+                self._check_ticker_name(feed_result['ticker_name'])
+                self._check_timeout(feed_result['timestamp'])
                 # Process
-                values.append(feed['value'])
+                values.append(feed_result['value'])
             except Exception as error:
                 # A pricefeed SCORE may not work as expected anymore,
                 # but we want to keep running Hylian as long as
@@ -156,26 +156,52 @@ class Hylian(IconScoreBase):
 
     @external(readonly=True)
     @catch_error
-    def online_feeds(self) -> int:
-        """ Return the number of online feeds """
-        online = 0
+    def operational_feeds(self) -> list:
+        """ Return the operational feeds """
+        operational = []
 
-        for address in FeedComposite.feeds(self.db):
+        for feed in self.feeds():
             try:
+                address = feed['address']
                 feed_score = self.create_interface_score(address, PriceFeedInterface)
                 # Retrieve the price
-                feed = feed_score.peek()
+                feed_result = feed_score.peek()
                 # Price Feed Checks
-                self._check_ticker_name(feed['ticker_name'])
-                self._check_timeout(feed['timestamp'])
+                self._check_ticker_name(feed_result['ticker_name'])
+                self._check_timeout(feed_result['timestamp'])
                 # Process
-                online += 1
+                feed['value'] = feed_result['value']
+                operational.append(feed)
             except Exception as error:
-                # Don't count the offline feed
+                # Don't count the malfunctioning feed
                 continue
 
-        # Return the number of feeds online
-        return online
+        # Return the number of feeds operational
+        return operational
+
+    @external(readonly=True)
+    @catch_error
+    def malfunctioning_feeds(self) -> list:
+        """ Return the malfunctioning feeds """
+        malfunctioning = []
+
+        for feed in self.feeds():
+            try:
+                address = feed['address']
+                feed_score = self.create_interface_score(address, PriceFeedInterface)
+                # Retrieve the price
+                feed_result = feed_score.peek()
+                # Price Feed Checks
+                self._check_ticker_name(feed_result['ticker_name'])
+                self._check_timeout(feed_result['timestamp'])
+                # Don't count the operational feed
+            except Exception as error:
+                feed['reason'] = repr(error)
+                malfunctioning.append(feed)
+                continue
+
+        # Return the number of feeds malfunctioning
+        return malfunctioning
 
     @external(readonly=True)
     @catch_error
