@@ -194,6 +194,7 @@ class Hylian(IconScoreBase):
                 # Price Feed Checks
                 self._check_ticker_name(feed_result['ticker_name'])
                 self._check_timeout(feed_result['timestamp'])
+                value = feed_result['value']
                 # Don't count the operational feed
             except Exception as error:
                 feed['reason'] = repr(error)
